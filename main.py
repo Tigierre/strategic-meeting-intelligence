@@ -1,12 +1,10 @@
-
 import streamlit as st
 import json
-import pandas as pd
 from pathlib import Path
-from datetime import datetime
+import os
 
 st.set_page_config(
-    page_title="Strategic Meeting Intelligence Demo",
+    page_title="Strategic Meeting Intelligence",
     page_icon="🧠",
     layout="wide"
 )
@@ -14,22 +12,37 @@ st.set_page_config(
 st.title("🧠 Strategic Meeting Intelligence")
 st.subheader("Transform every conversation into strategic advantage")
 
-# Carica dati
 @st.cache_data
 def load_analysis_data():
-    analysis_dir = Path("/content/strategic_meeting_dataset/analysis")
-    analysis_files = list(analysis_dir.glob("analysis_*.json"))
+    # Prova diversi path possibili
+    possible_paths = [
+        Path("analysis"),
+        Path("./analysis"),
+        Path("/app/analysis"),
+        Path(os.getcwd()) / "analysis"
+    ]
+    
+    analysis_files = []
+    for path in possible_paths:
+        if path.exists():
+            analysis_files = list(path.glob("analysis_transcription_*.json"))
+            if analysis_files:
+                break
     
     data = []
     for file in analysis_files:
-        with open(file, 'r', encoding='utf-8') as f:
-            data.append(json.load(f))
+        try:
+            with open(file, 'r', encoding='utf-8') as f:
+                data.append(json.load(f))
+        except Exception as e:
+            st.error(f"Errore caricamento {file}: {e}")
+    
     return data
 
 # Main interface
-try:
-    analysis_data = load_analysis_data()
-    
+analysis_data = load_analysis_data()
+
+if analysis_data:
     # Metrics overview
     st.header("📊 Intelligence Overview")
     
@@ -40,46 +53,64 @@ try:
     total_themes = sum(len(d['ai_analysis'].get('temi_ricorrenti', [])) for d in analysis_data)
     
     with col1:
-        st.metric("Meetings Analyzed", len(analysis_data))
+        st.metric("🎙️ Meetings", len(analysis_data))
     with col2:
-        st.metric("Strategic Insights", total_insights)
+        st.metric("💡 Insights", total_insights)
     with col3:
-        st.metric("Innovation Opportunities", total_opportunities)
+        st.metric("🚀 Opportunities", total_opportunities)
     with col4:
-        st.metric("Recurring Themes", total_themes)
+        st.metric("🔍 Themes", total_themes)
+    
+    st.success("✅ System operational with strategic insights generated!")
+    st.divider()
     
     # Meeting details
-    st.header("📋 Meeting Analysis Details")
+    st.header("📋 Strategic Analysis Results")
     
-    for i, meeting in enumerate(analysis_data):
-        with st.expander(f"🎙️ {meeting['meeting_info']['title']}"):
+    for meeting in analysis_data:
+        meeting_title = meeting['meeting_info']['title']
+        language = meeting['meeting_info']['language'].upper()
+        
+        with st.expander("🎙️ " + meeting_title + " (" + language + ")"):
             
             col1, col2 = st.columns(2)
             
             with col1:
                 st.subheader("💡 Strategic Insights")
                 insights = meeting['ai_analysis'].get('insight_strategici', [])
-                for insight in insights:
-                    st.write(f"• **{insight.get('insight', 'N/A')}**")
-                    st.write(f"  ↳ Action: {insight.get('azione_suggerita', 'N/A')}")
+                for i, insight in enumerate(insights, 1):
+                    st.markdown("**" + str(i) + ". " + insight.get('insight', 'N/A') + "**")
+                    if insight.get('azione_suggerita'):
+                        st.markdown("   ➡️ Action: " + insight['azione_suggerita'])
+                    st.markdown("")
             
             with col2:
                 st.subheader("🚀 Innovation Opportunities") 
                 opportunities = meeting['ai_analysis'].get('opportunita_innovation', [])
-                for opp in opportunities:
+                for i, opp in enumerate(opportunities, 1):
                     impact = opp.get('impatto_potenziale', 'N/A')
-                    st.write(f"• **{opp.get('opportunita', 'N/A')}** (Impact: {impact})")
+                    st.markdown("**" + str(i) + ". " + opp.get('opportunita', 'N/A') + "**")
+                    st.markdown("   📈 Impact: " + impact.title())
+                    st.markdown("")
             
             # Themes
             st.subheader("🔍 Recurring Themes")
             themes = meeting['ai_analysis'].get('temi_ricorrenti', [])
             for theme in themes:
                 importance = theme.get('importanza', 'N/A')
-                st.write(f"• {theme.get('tema', 'N/A')} (Importance: {importance})")
+                st.markdown("• **" + theme.get('tema', 'N/A') + "** (Importance: " + importance + ")")
 
-except Exception as e:
-    st.error(f"Error loading data: {e}")
-    st.write("Make sure the analysis files are available in /content/strategic_meeting_dataset/analysis/")
+else:
+    st.error("⚠️ No analysis data found")
+    st.info("📁 Looking for JSON files in analysis/ directory")
+    
+    # Debug info
+    st.write("🔍 Debug Info:")
+    current_dir = Path(".")
+    st.write(f"Current directory: {current_dir.resolve()}")
+    st.write("Files found:")
+    for item in current_dir.iterdir():
+        st.write(f"  - {item.name}")
 
-st.markdown("---")
-st.markdown("🚀 **Powered by Strategic Meeting Intelligence** - Transform conversations into competitive advantage")
+st.divider()
+st.markdown("🚀 **Powered by Strategic Meeting Intelligence**")
