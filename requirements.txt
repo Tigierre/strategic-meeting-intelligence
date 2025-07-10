@@ -3,4 +3,7 @@ pandas==2.1.4
 openai==1.6.1
 supabase==2.7.4
 python-dotenv==1.0.0
+requests==2.31.0
+assemblyai==0.17.0
+pydub==0.25.1
 pathlib
