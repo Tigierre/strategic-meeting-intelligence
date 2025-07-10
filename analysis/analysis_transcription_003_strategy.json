@@ -1,0 +1,69 @@
+{
+  "meeting_info": {
+    "title": "Riunione Strategica Aziendale",
+    "category": "strategy",
+    "language": "it",
+    "duration_min": 18,
+    "speakers": 3,
+    "created_at": "2025-07-09T17:41:40.258928"
+  },
+  "ai_analysis": {
+    "temi_ricorrenti": [
+      {
+        "tema": "Segmento Enterprise",
+        "frequenza": "5",
+        "importanza": "alta"
+      },
+      {
+        "tema": "Segmento SMB",
+        "frequenza": "2",
+        "importanza": "media"
+      },
+      {
+        "tema": "Vendite e Crescita",
+        "frequenza": "4",
+        "importanza": "alta"
+      },
+      {
+        "tema": "Customer Satisfaction",
+        "frequenza": "1",
+        "importanza": "media"
+      }
+    ],
+    "decisioni_prese": [
+      {
+        "decisione": "Considerare l'adattamento della proposta di valore per il segmento enterprise",
+        "responsabile": "Speaker 1",
+        "timeline": "Da definire"
+      }
+    ],
+    "opportunita_innovation": [
+      {
+        "opportunita": "Adattare la proposta di valore per il segmento enterprise",
+        "impatto_potenziale": "alto",
+        "feasibilita": "media"
+      }
+    ],
+    "pattern_resistenza": [
+      {
+        "argomento": "Investimenti nel segmento enterprise",
+        "tipo_resistenza": "esplicita",
+        "fonte": "Speaker 3"
+      }
+    ],
+    "insight_strategici": [
+      {
+        "insight": "Necessità di adattare la proposta di valore per il segmento enterprise",
+        "implicazione": "Potrebbe richiedere investimenti significativi e un sales cycle più lungo",
+        "azione_suggerita": "Valutare la possibilità di investire in un team specializzato e accettare un sales cycle più lungo"
+      },
+      {
+        "insight": "Alto livello di customer satisfaction",
+        "implicazione": "Un asset importante per il segmento enterprise",
+        "azione_suggerita": "Utilizzare il customer satisfaction come leva per acquisire nuovi clienti nel segmento enterprise"
+      }
+    ]
+  },
+  "analysis_timestamp": "2025-07-09T18:57:08.671208",
+  "analysis_id": "analysis_003"
+}
