@@ -1,0 +1,84 @@
+{
+  "meeting_info": {
+    "title": "Strategic Planning Meeting",
+    "category": "planning",
+    "language": "en",
+    "duration_min": 12,
+    "speakers": 4,
+    "created_at": "2025-07-09T17:41:40.258073"
+  },
+  "ai_analysis": {
+    "temi_ricorrenti": [
+      {
+        "tema": "Posizionamento Premium",
+        "frequenza": "3",
+        "importanza": "alta"
+      },
+      {
+        "tema": "Innovazione Prodotto",
+        "frequenza": "2",
+        "importanza": "alta"
+      },
+      {
+        "tema": "Integrazione AI",
+        "frequenza": "2",
+        "importanza": "alta"
+      },
+      {
+        "tema": "Resistenza Interna",
+        "frequenza": "1",
+        "importanza": "media"
+      },
+      {
+        "tema": "Supporto al Cliente",
+        "frequenza": "1",
+        "importanza": "media"
+      }
+    ],
+    "decisioni_prese": [
+      {
+        "decisione": "Considerare un posizionamento premium",
+        "responsabile": "Speaker 1",
+        "timeline": "Da definire"
+      },
+      {
+        "decisione": "Esplorare l'integrazione AI come differenziatore",
+        "responsabile": "Speaker 2",
+        "timeline": "Da definire"
+      }
+    ],
+    "opportunita_innovation": [
+      {
+        "opportunita": "Integrazione AI",
+        "impatto_potenziale": "alto",
+        "feasibilita": "bassa"
+      },
+      {
+        "opportunita": "Posizionamento premium",
+        "impatto_potenziale": "medio",
+        "feasibilita": "alta"
+      }
+    ],
+    "pattern_resistenza": [
+      {
+        "argomento": "Integrazione AI",
+        "tipo_resistenza": "esplicita",
+        "fonte": "Team di Ingegneria"
+      }
+    ],
+    "insight_strategici": [
+      {
+        "insight": "La concorrenza sta ottenendo trazione con un posizionamento premium",
+        "implicazione": "C'è spazio nel mercato per un posizionamento premium e prezzi più alti",
+        "azione_suggerita": "Considerare l'adattamento del posizionamento e dei prezzi"
+      },
+      {
+        "insight": "L'integrazione AI potrebbe essere un differenziatore chiave",
+        "implicazione": "L'innovazione del prodotto potrebbe giustificare un posizionamento premium",
+        "azione_suggerita": "Esplorare l'investimento in integrazione AI"
+      }
+    ]
+  },
+  "analysis_timestamp": "2025-07-09T18:56:45.586416",
+  "analysis_id": "analysis_002"
+}
