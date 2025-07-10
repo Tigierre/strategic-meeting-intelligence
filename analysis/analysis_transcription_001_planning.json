@@ -1,0 +1,63 @@
+{
+  "meeting_info": {
+    "title": "Strategic Planning Meeting",
+    "category": "planning",
+    "language": "en",
+    "duration_min": 12,
+    "speakers": 4,
+    "created_at": "2025-01-09T10:00:00"
+  },
+  "ai_analysis": {
+    "temi_ricorrenti": [
+      {
+        "tema": "AI Integration Strategy",
+        "frequenza": "5",
+        "importanza": "alta"
+      },
+      {
+        "tema": "Premium Positioning",
+        "frequenza": "3", 
+        "importanza": "media"
+      }
+    ],
+    "decisioni_prese": [
+      {
+        "decisione": "Explore premium pricing strategy",
+        "responsabile": "Speaker 1",
+        "timeline": "Next quarter"
+      }
+    ],
+    "opportunita_innovation": [
+      {
+        "opportunita": "AI-powered features development",
+        "impatto_potenziale": "alto",
+        "feasibilita": "media"
+      },
+      {
+        "opportunita": "Partnership strategy for faster development",
+        "impatto_potenziale": "alto",
+        "feasibilita": "alta"
+      }
+    ],
+    "pattern_resistenza": [
+      {
+        "argomento": "Technical complexity",
+        "tipo_resistenza": "esplicita",
+        "fonte": "Engineering team"
+      }
+    ],
+    "insight_strategici": [
+      {
+        "insight": "Competitor pricing 30% higher validates premium positioning opportunity",
+        "implicazione": "Market ready for premium strategic intelligence solutions",
+        "azione_suggerita": "Develop premium tier with advanced AI features"
+      },
+      {
+        "insight": "Engineering resistance to AI timeline indicates need for partnership approach",
+        "implicazione": "Faster time-to-market through strategic partnerships",
+        "azione_suggerita": "Evaluate AI partnership opportunities"
+      }
+    ]
+  },
+  "analysis_timestamp": "2025-01-09T10:30:00"
+}
