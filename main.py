@@ -685,72 +685,72 @@ def display_analysis_results(analysis):
                     if opp.get('investimento_richiesto'):
                         st.write(f"💰 **Investimento:** {opp['investimento_richiesto']}")
                     if opp.get('tempo_implementazione'):
-                       st.write(f"⏱️ **Tempo:** {opp['tempo_implementazione']}")
-                   st.divider()
-       
-       with tab3:
-           if 'recurring_themes' in analysis['ai_analysis']:
-               for theme in analysis['ai_analysis']['recurring_themes']:
-                   importance = theme.get('importanza', 'N/A')
-                   frequency = theme.get('frequenza', 'N/A')
-                   sentiment = theme.get('sentiment', 'neutro')
-                   
-                   # Emoji based on sentiment
-                   sent_emoji = "😊" if sentiment == 'positivo' else "😐" if sentiment == 'neutro' else "😟"
-                   imp_emoji = "🔥" if importance == 'alta' else "📋" if importance == 'media' else "📝"
-                   
-                   st.write(f"{imp_emoji} **{theme.get('tema', 'N/A')}**")
-                   st.write(f"   📊 Importanza: {importance.title()} | Frequenza: {frequency}")
-                   st.write(f"   {sent_emoji} Sentiment: {sentiment.title()}")
-                   if theme.get('pattern_emotivo'):
-                       st.write(f"   🎭 Pattern: {theme['pattern_emotivo']}")
-                   st.divider()
-       
-       with tab4:
-           if 'decisions_made' in analysis['ai_analysis']:
-               for i, decision in enumerate(analysis['ai_analysis']['decisions_made'], 1):
-                   st.write(f"**{i}. {decision.get('decisione', 'N/A')}**")
-                   st.write(f"   👤 **Responsabile:** {decision.get('responsabile', 'N/A')}")
-                   st.write(f"   ⏰ **Timeline:** {decision.get('timeline', 'N/A')}")
-                   if decision.get('risorse_necessarie'):
-                       st.write(f"   💼 **Risorse:** {decision['risorse_necessarie']}")
-                   if decision.get('rischi_identificati'):
-                       st.write(f"   ⚠️ **Rischi:** {decision['rischi_identificati']}")
-                   st.divider()
-       
-       with tab5:
-           if 'weak_signals' in analysis['ai_analysis']:
-               for i, signal in enumerate(analysis['ai_analysis']['weak_signals'], 1):
-                   urgency = signal.get('urgenza', 'media')
-                   urg_emoji = "🚨" if urgency == 'alta' else "⚡" if urgency == 'media' else "💡"
-                   
-                   st.write(f"{urg_emoji} **{i}. {signal.get('segnale', 'N/A')}**")
-                   if signal.get('implicazioni'):
-                       st.write(f"   🎯 **Implicazioni:** {signal['implicazioni']}")
-                   if signal.get('azioni_preventive'):
-                       st.write(f"   🛡️ **Azioni preventive:** {signal['azioni_preventive']}")
-                   st.write(f"   📈 **Urgenza:** {urgency.title()}")
-                   st.divider()
-       
-       with tab6:
-           if 'team_dynamics' in analysis['ai_analysis']:
-               for i, dynamic in enumerate(analysis['ai_analysis']['team_dynamics'], 1):
-                   st.write(f"🤝 **{i}. {dynamic.get('dinamica', 'N/A')}**")
-                   if dynamic.get('impatto_su_business'):
-                       st.write(f"   📊 **Impatto Business:** {dynamic['impatto_su_business']}")
-                   if dynamic.get('raccomandazione'):
-                       st.write(f"   💡 **Raccomandazione:** {dynamic['raccomandazione']}")
-                   st.divider()
-       
-       with tab7:
-           if 'competitive_intelligence' in analysis['ai_analysis']:
-               for i, intel in enumerate(analysis['ai_analysis']['competitive_intelligence'], 1):
-                   st.write(f"🎯 **{i}. {intel.get('insight_competitivo', 'N/A')}**")
-                   if intel.get('vantaggio_potenziale'):
-                       st.write(f"   🚀 **Vantaggio:** {intel['vantaggio_potenziale']}")
-                   if intel.get('azione_immediata'):
-                       st.write(f"   ⚡ **Azione immediata:** {intel['azione_immediata']}")
-                   st.divider()
+                        st.write(f"⏱️ **Tempo:** {opp['tempo_implementazione']}")
+                    st.divider()
+        
+        with tab3:
+            if 'recurring_themes' in analysis['ai_analysis']:
+                for theme in analysis['ai_analysis']['recurring_themes']:
+                    importance = theme.get('importanza', 'N/A')
+                    frequency = theme.get('frequenza', 'N/A')
+                    sentiment = theme.get('sentiment', 'neutro')
+                    
+                    # Emoji based on sentiment
+                    sent_emoji = "😊" if sentiment == 'positivo' else "😐" if sentiment == 'neutro' else "😟"
+                    imp_emoji = "🔥" if importance == 'alta' else "📋" if importance == 'media' else "📝"
+                    
+                    st.write(f"{imp_emoji} **{theme.get('tema', 'N/A')}**")
+                    st.write(f"   📊 Importanza: {importance.title()} | Frequenza: {frequency}")
+                    st.write(f"   {sent_emoji} Sentiment: {sentiment.title()}")
+                    if theme.get('pattern_emotivo'):
+                        st.write(f"   🎭 Pattern: {theme['pattern_emotivo']}")
+                    st.divider()
+        
+        with tab4:
+            if 'decisions_made' in analysis['ai_analysis']:
+                for i, decision in enumerate(analysis['ai_analysis']['decisions_made'], 1):
+                    st.write(f"**{i}. {decision.get('decisione', 'N/A')}**")
+                    st.write(f"   👤 **Responsabile:** {decision.get('responsabile', 'N/A')}")
+                    st.write(f"   ⏰ **Timeline:** {decision.get('timeline', 'N/A')}")
+                    if decision.get('risorse_necessarie'):
+                        st.write(f"   💼 **Risorse:** {decision['risorse_necessarie']}")
+                    if decision.get('rischi_identificati'):
+                        st.write(f"   ⚠️ **Rischi:** {decision['rischi_identificati']}")
+                    st.divider()
+        
+        with tab5:
+            if 'weak_signals' in analysis['ai_analysis']:
+                for i, signal in enumerate(analysis['ai_analysis']['weak_signals'], 1):
+                    urgency = signal.get('urgenza', 'media')
+                    urg_emoji = "🚨" if urgency == 'alta' else "⚡" if urgency == 'media' else "💡"
+                    
+                    st.write(f"{urg_emoji} **{i}. {signal.get('segnale', 'N/A')}**")
+                    if signal.get('implicazioni'):
+                        st.write(f"   🎯 **Implicazioni:** {signal['implicazioni']}")
+                    if signal.get('azioni_preventive'):
+                        st.write(f"   🛡️ **Azioni preventive:** {signal['azioni_preventive']}")
+                    st.write(f"   📈 **Urgenza:** {urgency.title()}")
+                    st.divider()
+        
+        with tab6:
+            if 'team_dynamics' in analysis['ai_analysis']:
+                for i, dynamic in enumerate(analysis['ai_analysis']['team_dynamics'], 1):
+                    st.write(f"🤝 **{i}. {dynamic.get('dinamica', 'N/A')}**")
+                    if dynamic.get('impatto_su_business'):
+                        st.write(f"   📊 **Impatto Business:** {dynamic['impatto_su_business']}")
+                    if dynamic.get('raccomandazione'):
+                        st.write(f"   💡 **Raccomandazione:** {dynamic['raccomandazione']}")
+                    st.divider()
+        
+        with tab7:
+            if 'competitive_intelligence' in analysis['ai_analysis']:
+                for i, intel in enumerate(analysis['ai_analysis']['competitive_intelligence'], 1):
+                    st.write(f"🎯 **{i}. {intel.get('insight_competitivo', 'N/A')}**")
+                    if intel.get('vantaggio_potenziale'):
+                        st.write(f"   🚀 **Vantaggio:** {intel['vantaggio_potenziale']}")
+                    if intel.get('azione_immediata'):
+                        st.write(f"   ⚡ **Azione immediata:** {intel['azione_immediata']}")
+                    st.divider()
 
 if __name__ == "__main__":
-   main()
+    main()
