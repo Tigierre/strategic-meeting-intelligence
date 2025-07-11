@@ -444,25 +444,6 @@ Provide at least 5-7 concrete actionable strategic insights. Be specific, not ge
     except Exception as e:
         return {'success': False, 'error': str(e)}
 
-@st.cache_data
-def load_demo_data():
-    """Load existing demo analysis data"""
-    analysis_path = Path("analysis")
-    if not analysis_path.exists():
-        return []
-    
-    data = []
-    analysis_files = list(analysis_path.glob("analysis_transcription_*.json"))
-    
-    for file in analysis_files:
-        try:
-            with open(file, 'r', encoding='utf-8') as f:
-                data.append(json.load(f))
-        except Exception:
-            continue
-    
-    return data
-
 def main():
     st.title("🧠 Strategic Meeting Intelligence")
     st.subheader("Transform every conversation into strategic advantage")
@@ -600,28 +581,21 @@ def main():
                 st.balloons()
                 st.rerun()
     
-    # Display results
+    # Display results for new analysis only
     if 'new_analysis' in st.session_state:
-        display_new_analysis(st.session_state.new_analysis)
-    
-    # Load and display demo data
-    demo_data = load_demo_data()
-    
-    if demo_data:
-        st.header("📊 Previous Analysis Results")
-        display_demo_analysis(demo_data)
+        display_analysis_results(st.session_state.new_analysis)
     else:
-        if 'new_analysis' not in st.session_state:
-            st.info("📁 No analysis found. Upload an audio file to get started!")
+        # Clean welcome message
+        st.info("🎙️ Upload an audio file above to get started with AI-powered meeting analysis!")
 
-def display_new_analysis(analysis):
-    """Display newly processed analysis"""
-    st.header("🎙️ Real Audio Analysis Results")
+def display_analysis_results(analysis):
+    """Display analysis results with enhanced formatting"""
+    st.header("🎙️ Meeting Analysis Results")
     
-    # Basic info
+    # Basic info metrics
     col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.metric("📄 File", analysis['filename'])
+        st.metric("📄 File", analysis['filename'][:20] + "..." if len(analysis['filename']) > 20 else analysis['filename'])
     with col2:
         lang_display = "🇮🇹 Italiano" if analysis['transcription']['language'] == 'it' else f"🗣️ {analysis['transcription']['language'].upper()}"
         st.metric("Language", lang_display)
@@ -645,12 +619,12 @@ def display_new_analysis(analysis):
         else:
             st.warning("⚠️ AI analysis failed")
     
-    # Transcription with better formatting
+    # Transcription section
     with st.expander("📝 High-Quality Transcription", expanded=False):
         st.markdown("**Transcribed with enhanced Whisper settings:**")
         st.text_area("", analysis['transcription']['text'], height=300, disabled=True)
     
-    # Speaker analysis with timeline
+    # Speaker timeline section
     if analysis['speakers'] and len(analysis['speakers']) > 0:
         with st.expander("👥 Speaker Timeline", expanded=True):
             st.write(f"**Detected {analysis['speaker_count']} different speakers**")
@@ -661,14 +635,22 @@ def display_new_analysis(analysis):
                 end_time = f"{int(segment['end']//60):02d}:{int(segment['end']%60):02d}"
                 st.write(f"**{segment['speaker']}** [{start_time} - {end_time}]")
     
-    # AI Analysis with language-aware display
+    # Enhanced AI Analysis display
     if analysis['ai_analysis']:
         lang = analysis['transcription']['language']
         title_suffix = "in Italiano 🇮🇹" if lang == 'it' else "in English 🇬🇧"
         st.subheader(f"🧠 Strategic Intelligence {title_suffix}")
         
-        # Create tabs for different analysis types
-        tab1, tab2, tab3, tab4 = st.tabs(["💡 Strategic Insights", "🚀 Innovation Opportunities", "🔍 Themes", "⚡ Decisions"])
+        # Create enhanced tabs
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+            "💡 Strategic Insights", 
+            "🚀 Innovation Opportunities", 
+            "🔍 Themes", 
+            "⚡ Decisions",
+            "📡 Weak Signals",
+            "🤝 Team Dynamics", 
+            "🎯 Competitive Intel"
+        ])
         
         with tab1:
             if 'strategic_insights' in analysis['ai_analysis']:
@@ -678,84 +660,19 @@ def display_new_analysis(analysis):
                         st.write(f"   🎯 *{insight['implicazione']}*")
                     if insight.get('azione_suggerita'):
                         st.write(f"   ➡️ **Azione:** {insight['azione_suggerita']}")
+                    if insight.get('priorita'):
+                        priority_emoji = "🔴" if insight['priorita'] == 'alta' else "🟡" if insight['priorita'] == 'media' else "🟢"
+                        st.write(f"   {priority_emoji} **Priorità:** {insight['priorita'].title()}")
+                    if insight.get('timeline'):
+                        st.write(f"   ⏰ **Timeline:** {insight['timeline']}")
                     st.divider()
         
         with tab2:
             if 'innovation_opportunities' in analysis['ai_analysis']:
                 for i, opp in enumerate(analysis['ai_analysis']['innovation_opportunities'], 1):
-                    impact = opp.get('impatto_potenziale', 'N/A')
-                    feasibility = opp.get('feasibilita', 'N/A')
                     st.write(f"**{i}. {opp.get('opportunita', 'N/A')}**")
                     
                     col1, col2 = st.columns(2)
                     with col1:
-                        st.write(f"📈 **Impatto:** {impact.title()}")
-                    with col2:
-                        st.write(f"🎯 **Fattibilità:** {feasibility.title()}")
-                    st.divider()
-        
-        with tab3:
-            if 'recurring_themes' in analysis['ai_analysis']:
-                for theme in analysis['ai_analysis']['recurring_themes']:
-                    importance = theme.get('importanza', 'N/A')
-                    frequency = theme.get('frequenza', 'N/A')
-                    st.write(f"**{theme.get('tema', 'N/A')}**")
-                    st.write(f"   Importanza: {importance.title()} | Frequenza: {frequency}")
-                    st.divider()
-        
-        with tab4:
-            if 'decisions_made' in analysis['ai_analysis']:
-                for i, decision in enumerate(analysis['ai_analysis']['decisions_made'], 1):
-                    st.write(f"**{i}. {decision.get('decisione', 'N/A')}**")
-                    st.write(f"   👤 Responsabile: {decision.get('responsabile', 'N/A')}")
-                    st.write(f"   ⏰ Timeline: {decision.get('timeline', 'N/A')}")
-                    st.divider()
-
-def display_demo_analysis(demo_data):
-    """Display demo analysis data"""
-    
-    # Metrics overview
-    total_insights = sum(len(d['ai_analysis'].get('insight_strategici', [])) for d in demo_data)
-    total_opportunities = sum(len(d['ai_analysis'].get('opportunita_innovation', [])) for d in demo_data)
-    total_themes = sum(len(d['ai_analysis'].get('temi_ricorrenti', [])) for d in demo_data)
-    
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric("🎙️ Demo Meetings", len(demo_data))
-    with col2:
-        st.metric("💡 Demo Insights", total_insights)
-    with col3:
-        st.metric("🚀 Demo Opportunities", total_opportunities)
-    with col4:
-        st.metric("🔍 Demo Themes", total_themes)
-    
-    st.info("📋 These are demo results from pre-analyzed meetings")
-    
-    # Meeting details
-    for meeting in demo_data:
-        meeting_title = meeting['meeting_info']['title']
-        language = meeting['meeting_info']['language'].upper()
-        
-        with st.expander(f"🎙️ {meeting_title} ({language}) - Demo Analysis"):
-            
-            col1, col2 = st.columns(2)
-            
-            with col1:
-                st.subheader("💡 Strategic Insights")
-                insights = meeting['ai_analysis'].get('insight_strategici', [])
-                for i, insight in enumerate(insights, 1):
-                    st.write(f"**{i}. {insight.get('insight', 'N/A')}**")
-                    if insight.get('azione_suggerita'):
-                        st.write(f"   ➡️ Action: {insight['azione_suggerita']}")
-            
-            with col2:
-                st.subheader("🚀 Innovation Opportunities") 
-                opportunities = meeting['ai_analysis'].get('opportunita_innovation', [])
-                for i, opp in enumerate(opportunities, 1):
-                    impact = opp.get('impatto_potenziale', 'N/A')
-                    st.write(f"**{i}. {opp.get('opportunita', 'N/A')}**")
-                    st.write(f"   📈 Impact: {impact.title()}")
-
-if __name__ == "__main__":
-    main()
+                        impact = opp.get('impatto_potenziale', 'N/A')
+                        impact_emoji = "🚀" if impact == 'alto' else "
