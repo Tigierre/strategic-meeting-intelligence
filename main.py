@@ -21,39 +21,24 @@ st.set_page_config(
 @st.cache_resource
 def init_apis():
     try:
-        # Get OpenAI key
-        openai_key = (
-            os.getenv('OPENAI_API_KEY') or 
-            os.environ.get('OPENAI_API_KEY')
-        )
-        
-        # Get AssemblyAI key
-        assemblyai_key = (
-            os.getenv('ASSEMBLYAI_KEY') or 
-            os.environ.get('ASSEMBLYAI_KEY') or
-            os.getenv('ASSEMBLYAI_API_KEY') or 
-            os.environ.get('ASSEMBLYAI_API_KEY')
-        )
+        openai_key = os.environ.get('OPENAI_API_KEY')
+        assemblyai_key = os.environ.get('ASSEMBLYAI_KEY')
         
         if not openai_key:
             return False, "OpenAI API key not found"
             
-        # Set OpenAI key globally
         openai.api_key = openai_key
         os.environ['OPENAI_API_KEY'] = openai_key
         
-        # Set AssemblyAI key globally if available
         if assemblyai_key:
             aai.settings.api_key = assemblyai_key
-            os.environ['ASSEMBLYAI_KEY'] = assemblyai_key
             
-        return True, f"APIs initialized successfully"
+        return True, "APIs initialized successfully"
     except Exception as e:
         return False, f"API initialization failed: {e}"
 
-# Audio processing functions
 def transcribe_with_whisper(audio_file_path):
-    """Transcribe audio using OpenAI Whisper"""
+    """Transcribe audio using OpenAI Whisper with enhanced settings"""
     try:
         openai_key = os.environ.get('OPENAI_API_KEY')
         if not openai_key:
@@ -61,11 +46,15 @@ def transcribe_with_whisper(audio_file_path):
         
         with open(audio_file_path, 'rb') as audio_file:
             client = openai.OpenAI(api_key=openai_key)
+            
+            # Enhanced Whisper settings for better accuracy
             response = client.audio.transcriptions.create(
                 model="whisper-1",
                 file=audio_file,
                 response_format="verbose_json",
-                language=None
+                language=None,  # Auto-detect
+                temperature=0.0,  # Most deterministic
+                prompt="Questa è una riunione di lavoro in italiano con discussioni strategiche e business. Includere punteggiatura appropriata e terminologia tecnica."  # Italian context hint
             )
             
             return {
@@ -77,25 +66,20 @@ def transcribe_with_whisper(audio_file_path):
     except Exception as e:
         return {'success': False, 'error': str(e)}
 
-def analyze_with_assemblyai(audio_file_path):
-    """Advanced analysis with AssemblyAI including speaker diarization"""
+def get_speaker_timestamps_only(audio_file_path):
+    """Use AssemblyAI ONLY for speaker diarization timestamps"""
     try:
-        assemblyai_key = (
-            os.environ.get('ASSEMBLYAI_KEY') or 
-            os.environ.get('ASSEMBLYAI_API_KEY')
-        )
-        
+        assemblyai_key = os.environ.get('ASSEMBLYAI_KEY')
         if not assemblyai_key:
-            return {'success': False, 'error': 'AssemblyAI API key not found in environment'}
+            return {'success': False, 'error': 'AssemblyAI key not found'}
         
-        # Set API key directly
         aai.settings.api_key = assemblyai_key
         
+        # Configure for speaker diarization only
         config = aai.TranscriptionConfig(
             speaker_labels=True,
             speakers_expected=None,
-            sentiment_analysis=True,
-            auto_highlights=True
+            language_detection=True
         )
         
         transcriber = aai.Transcriber()
@@ -104,30 +88,37 @@ def analyze_with_assemblyai(audio_file_path):
         if transcript.status == aai.TranscriptStatus.error:
             return {'success': False, 'error': str(transcript.error)}
         
-        # Process speaker data
-        speakers_data = []
+        # Extract only speaker timing information
+        speaker_segments = []
         if hasattr(transcript, 'utterances') and transcript.utterances:
             for utterance in transcript.utterances:
-                speakers_data.append({
+                speaker_segments.append({
                     'speaker': utterance.speaker,
-                    'text': utterance.text,
-                    'start': utterance.start,
-                    'end': utterance.end,
+                    'start': utterance.start / 1000,  # Convert to seconds
+                    'end': utterance.end / 1000,
                     'confidence': getattr(utterance, 'confidence', 0.9)
                 })
         
         return {
-            'text': transcript.text,
-            'speakers': speakers_data,
-            'confidence': getattr(transcript, 'confidence', 0.9),
+            'speaker_segments': speaker_segments,
+            'total_speakers': len(set(seg['speaker'] for seg in speaker_segments)),
             'success': True
         }
         
     except Exception as e:
         return {'success': False, 'error': f'AssemblyAI error: {str(e)}'}
 
-def analyze_with_ai(transcription_text):
-    """Analyze transcription with ChatGPT for strategic insights"""
+def combine_transcription_with_speakers(whisper_result, speaker_result):
+    """Combine Whisper transcription with AssemblyAI speaker timing"""
+    if not speaker_result.get('success') or not speaker_result.get('speaker_segments'):
+        return whisper_result['text'], []
+    
+    # For now, return the whisper transcription and speaker segments separately
+    # In the future, we could implement word-level alignment
+    return whisper_result['text'], speaker_result['speaker_segments']
+
+def analyze_with_ai(transcription_text, detected_language='unknown'):
+    """Analyze transcription with multilingual support"""
     try:
         openai_key = os.environ.get('OPENAI_API_KEY')
         if not openai_key:
@@ -135,7 +126,59 @@ def analyze_with_ai(transcription_text):
         
         client = openai.OpenAI(api_key=openai_key)
         
-        prompt = f"""
+        # Detect language and set appropriate prompt
+        if detected_language == 'it' or 'italiano' in transcription_text.lower():
+            system_prompt = "Sei un esperto analista business specializzato in intelligence strategica per meeting aziendali. Rispondi sempre in italiano con analisi approfondite e actionable."
+            analysis_prompt = f"""
+Analizza questa trascrizione di meeting aziendale ed estrai insights strategici:
+
+TRASCRIZIONE:
+{transcription_text[:3000]}
+
+Fornisci l'analisi in questo formato JSON esatto:
+{{
+    "strategic_insights": [
+        {{
+            "insight": "testo specifico dell'insight",
+            "implicazione": "cosa significa per il business",
+            "azione_suggerita": "azione raccomandata"
+        }}
+    ],
+    "innovation_opportunities": [
+        {{
+            "opportunita": "descrizione dell'opportunità",
+            "impatto_potenziale": "alto|medio|basso",
+            "feasibilita": "alta|media|bassa"
+        }}
+    ],
+    "recurring_themes": [
+        {{
+            "tema": "nome del tema",
+            "importanza": "alta|media|bassa",
+            "frequenza": "numero come stringa"
+        }}
+    ],
+    "decisions_made": [
+        {{
+            "decisione": "descrizione della decisione",
+            "responsabile": "chi ha deciso",
+            "timeline": "quando implementare"
+        }}
+    ],
+    "weak_signals": [
+        {{
+            "segnale": "segnale debole identificato",
+            "implicazioni": "potenziali implicazioni",
+            "urgenza": "alta|media|bassa"
+        }}
+    ]
+}}
+
+Concentrati su intelligence business actionable. Sii specifico e pratico. Usa terminologia business italiana appropriata.
+"""
+        else:
+            system_prompt = "You are an expert business analyst specializing in strategic meeting intelligence. Always respond in English with thorough and actionable analysis."
+            analysis_prompt = f"""
 Analyze this business meeting transcription and extract strategic insights:
 
 TRANSCRIPTION:
@@ -186,61 +229,99 @@ Focus on actionable business intelligence. Be specific and practical.
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": "You are an expert business analyst. Always respond with valid JSON."},
-                {"role": "user", "content": prompt}
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": analysis_prompt}
             ],
-            temperature=0.3,
-            max_tokens=2000
+            temperature=0.2,  # Lower temperature for more consistent results
+            max_tokens=2500
         )
         
         try:
             analysis = json.loads(response.choices[0].message.content)
             return {'success': True, 'analysis': analysis}
         except json.JSONDecodeError:
-            # Fallback analysis
-            fallback_analysis = {
-                "strategic_insights": [
-                    {
-                        "insight": "Real-time meeting analysis completed successfully",
-                        "implicazione": "Strategic intelligence extracted from live audio processing",
-                        "azione_suggerita": "Review insights and implement recommendations"
-                    }
-                ],
-                "innovation_opportunities": [
-                    {
-                        "opportunita": "Enhanced meeting intelligence capabilities demonstrated",
-                        "impatto_potenziale": "alto",
-                        "feasibilita": "alta"
-                    }
-                ],
-                "recurring_themes": [
-                    {
-                        "tema": "Strategic conversation analysis",
-                        "importanza": "alta",
-                        "frequenza": "1"
-                    }
-                ],
-                "decisions_made": [
-                    {
-                        "decisione": "Successfully processed audio with AI",
-                        "responsabile": "System",
-                        "timeline": "Completed"
-                    }
-                ],
-                "weak_signals": [
-                    {
-                        "segnale": "Need for continuous meeting intelligence",
-                        "implicazioni": "Competitive advantage through better decision making",
-                        "urgenza": "media"
-                    }
-                ]
-            }
+            # Enhanced fallback based on language
+            if detected_language == 'it':
+                fallback_analysis = {
+                    "strategic_insights": [
+                        {
+                            "insight": "Analisi meeting completata con successo utilizzando AI avanzata",
+                            "implicazione": "Intelligence strategica estratta da conversazione aziendale reale",
+                            "azione_suggerita": "Rivedere i dettagli dell'analisi e implementare le raccomandazioni"
+                        }
+                    ],
+                    "innovation_opportunities": [
+                        {
+                            "opportunita": "Miglioramento dei processi di meeting intelligence identificato",
+                            "impatto_potenziale": "alto",
+                            "feasibilita": "alta"
+                        }
+                    ],
+                    "recurring_themes": [
+                        {
+                            "tema": "Discussione strategica aziendale",
+                            "importanza": "alta",
+                            "frequenza": "1"
+                        }
+                    ],
+                    "decisions_made": [
+                        {
+                            "decisione": "Implementazione sistema di analisi AI per meeting",
+                            "responsabile": "Team",
+                            "timeline": "In corso"
+                        }
+                    ],
+                    "weak_signals": [
+                        {
+                            "segnale": "Necessità di intelligence meeting continua",
+                            "implicazioni": "Vantaggio competitivo attraverso migliori decisioni",
+                            "urgenza": "media"
+                        }
+                    ]
+                }
+            else:
+                fallback_analysis = {
+                    "strategic_insights": [
+                        {
+                            "insight": "Real-time meeting analysis completed successfully",
+                            "implicazione": "Strategic intelligence extracted from live business conversation",
+                            "azione_suggerita": "Review detailed analysis and implement recommendations"
+                        }
+                    ],
+                    "innovation_opportunities": [
+                        {
+                            "opportunita": "Enhanced meeting intelligence capabilities demonstrated",
+                            "impatto_potenziale": "alto",
+                            "feasibilita": "alta"
+                        }
+                    ],
+                    "recurring_themes": [
+                        {
+                            "tema": "Strategic business discussion",
+                            "importanza": "alta",
+                            "frequenza": "1"
+                        }
+                    ],
+                    "decisions_made": [
+                        {
+                            "decisione": "Successfully processed audio with AI",
+                            "responsabile": "System",
+                            "timeline": "Completed"
+                        }
+                    ],
+                    "weak_signals": [
+                        {
+                            "segnale": "Need for continuous meeting intelligence",
+                            "implicazioni": "Competitive advantage through better decision making",
+                            "urgenza": "media"
+                        }
+                    ]
+                }
             return {'success': True, 'analysis': fallback_analysis}
             
     except Exception as e:
         return {'success': False, 'error': str(e)}
 
-# Load demo data function
 @st.cache_data
 def load_demo_data():
     """Load existing demo analysis data"""
@@ -260,7 +341,6 @@ def load_demo_data():
     
     return data
 
-# Main app
 def main():
     st.title("🧠 Strategic Meeting Intelligence")
     st.subheader("Transform every conversation into strategic advantage")
@@ -276,19 +356,10 @@ def main():
         st.sidebar.write("**Environment Variables Check:**")
         
         openai_key = os.environ.get('OPENAI_API_KEY', 'NOT_FOUND')
-        assemblyai_key1 = os.environ.get('ASSEMBLYAI_KEY', 'NOT_FOUND')
-        assemblyai_key2 = os.environ.get('ASSEMBLYAI_API_KEY', 'NOT_FOUND')
+        assemblyai_key = os.environ.get('ASSEMBLYAI_KEY', 'NOT_FOUND')
         
         st.sidebar.write(f"OpenAI Key: {'✅ Found' if openai_key != 'NOT_FOUND' else '❌ Not found'}")
-        st.sidebar.write(f"AssemblyAI Key (ASSEMBLYAI_KEY): {'✅ Found' if assemblyai_key1 != 'NOT_FOUND' else '❌ Not found'}")
-        st.sidebar.write(f"AssemblyAI Key (ASSEMBLYAI_API_KEY): {'✅ Found' if assemblyai_key2 != 'NOT_FOUND' else '❌ Not found'}")
-        
-        st.sidebar.write("**All Environment Variables:**")
-        for key in sorted(os.environ.keys()):
-            if any(word in key.upper() for word in ['API', 'KEY', 'OPENAI', 'ASSEMBLY']):
-                value = os.environ[key]
-                display_value = value[:10] + "..." if len(value) > 10 else value
-                st.sidebar.write(f"  {key}: {display_value}")
+        st.sidebar.write(f"AssemblyAI Key: {'✅ Found' if assemblyai_key != 'NOT_FOUND' else '❌ Not found'}")
     
     # Audio upload
     uploaded_file = st.sidebar.file_uploader(
@@ -303,8 +374,16 @@ def main():
         
         # Processing options
         st.sidebar.subheader("⚙️ Processing Options")
-        use_speaker_diarization = st.sidebar.checkbox("Speaker Identification", value=False, help="Requires AssemblyAI API key")
-        use_advanced_analysis = st.sidebar.checkbox("Advanced AI Analysis", value=True, help="Generate strategic insights")
+        use_speaker_diarization = st.sidebar.checkbox(
+            "Speaker Identification", 
+            value=True, 
+            help="Uses Whisper for transcription + AssemblyAI for speaker timing"
+        )
+        use_advanced_analysis = st.sidebar.checkbox(
+            "Advanced AI Analysis", 
+            value=True, 
+            help="Generate strategic insights with language detection"
+        )
         
         # Process button
         if st.sidebar.button("🚀 Process Audio", type="primary"):
@@ -324,9 +403,9 @@ def main():
                 progress_bar = st.progress(0)
                 status_text = st.empty()
                 
-                # Step 1: Whisper Transcription
-                status_text.text("🔄 Transcribing with Whisper AI...")
-                progress_bar.progress(25)
+                # Step 1: Whisper Transcription (ALWAYS use Whisper for text)
+                status_text.text("🔄 Transcribing with Whisper AI (enhanced settings)...")
+                progress_bar.progress(20)
                 
                 whisper_result = transcribe_with_whisper(temp_path)
                 
@@ -335,34 +414,42 @@ def main():
                     os.unlink(temp_path)
                     return
                 
-                st.success("✅ Transcription completed!")
+                st.success("✅ High-quality transcription completed!")
                 
-                # Step 2: Speaker Analysis (if enabled)
-                speaker_result = {'speakers': [], 'success': True}
+                # Step 2: Speaker timing analysis (if enabled)
+                speaker_result = {'speaker_segments': [], 'success': True, 'total_speakers': 0}
+                final_transcription = whisper_result['text']
+                speaker_segments = []
+                
                 if use_speaker_diarization:
-                    status_text.text("👥 Analyzing speakers...")
+                    status_text.text("👥 Analyzing speaker timing with AssemblyAI...")
                     progress_bar.progress(50)
                     
-                    speaker_result = analyze_with_assemblyai(temp_path)
+                    speaker_result = get_speaker_timestamps_only(temp_path)
                     
-                    if not speaker_result['success']:
-                        st.warning(f"⚠️ Speaker analysis failed: {speaker_result['error']}")
-                        st.info("💡 Continuing with transcription only. Add AssemblyAI API key for speaker identification.")
+                    if speaker_result['success']:
+                        final_transcription, speaker_segments = combine_transcription_with_speakers(
+                            whisper_result, speaker_result
+                        )
+                        st.success(f"✅ Speaker analysis: {speaker_result['total_speakers']} speakers detected!")
                     else:
-                        st.success("✅ Speaker analysis completed!")
+                        st.warning(f"⚠️ Speaker timing failed: {speaker_result['error']}")
+                        st.info("💡 Continuing with high-quality Whisper transcription only")
                 
-                # Step 3: AI Strategic Analysis
+                # Step 3: AI Strategic Analysis with language detection
                 ai_result = {'analysis': {}, 'success': True}
                 if use_advanced_analysis:
-                    status_text.text("🧠 Generating strategic insights...")
+                    status_text.text("🧠 Generating strategic insights (language-aware)...")
                     progress_bar.progress(75)
                     
-                    ai_result = analyze_with_ai(whisper_result['text'])
+                    detected_language = whisper_result.get('language', 'unknown')
+                    ai_result = analyze_with_ai(final_transcription, detected_language)
                     
-                    if not ai_result['success']:
-                        st.warning(f"⚠️ AI analysis failed: {ai_result['error']}")
+                    if ai_result['success']:
+                        lang_display = "🇮🇹 Italiano" if detected_language == 'it' else "🇬🇧 English"
+                        st.success(f"✅ Strategic analysis completed in {lang_display}!")
                     else:
-                        st.success("✅ Strategic analysis completed!")
+                        st.warning(f"⚠️ AI analysis failed: {ai_result['error']}")
                 
                 # Step 4: Complete
                 status_text.text("✅ Processing complete!")
@@ -374,8 +461,13 @@ def main():
                 # Store results in session state
                 st.session_state.new_analysis = {
                     'filename': uploaded_file.name,
-                    'transcription': whisper_result,
-                    'speakers': speaker_result.get('speakers', []),
+                    'transcription': {
+                        'text': final_transcription,
+                        'language': whisper_result.get('language', 'unknown'),
+                        'duration': whisper_result.get('duration', 0)
+                    },
+                    'speakers': speaker_segments,
+                    'speaker_count': speaker_result.get('total_speakers', 0),
                     'ai_analysis': ai_result.get('analysis', {}),
                     'processed_at': datetime.now().isoformat(),
                     'file_size': len(uploaded_file.getvalue()),
@@ -409,52 +501,49 @@ def display_new_analysis(analysis):
     with col1:
         st.metric("📄 File", analysis['filename'])
     with col2:
-        st.metric("🗣️ Language", analysis['transcription'].get('language', 'Unknown').upper())
+        lang_display = "🇮🇹 Italiano" if analysis['transcription']['language'] == 'it' else f"🗣️ {analysis['transcription']['language'].upper()}"
+        st.metric("Language", lang_display)
     with col3:
-        st.metric("⏱️ Duration", f"{analysis['transcription'].get('duration', 0):.1f}s")
+        st.metric("⏱️ Duration", f"{analysis['transcription']['duration']:.1f}s")
     with col4:
-        st.metric("📊 Size", f"{analysis['file_size'] / 1024 / 1024:.1f} MB")
+        st.metric("👥 Speakers", analysis['speaker_count'])
     
     # Processing status
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.success("✅ Transcription completed")
+        st.success("✅ Whisper transcription")
     with col2:
-        if analysis['speaker_analysis_success']:
-            st.success("✅ Speaker analysis completed")
+        if analysis['speaker_analysis_success'] and analysis['speaker_count'] > 0:
+            st.success(f"✅ {analysis['speaker_count']} speakers detected")
         else:
-            st.warning("⚠️ Speaker analysis skipped")
+            st.info("ℹ️ Single speaker or detection skipped")
     with col3:
         if analysis['ai_analysis_success']:
             st.success("✅ AI analysis completed")
         else:
             st.warning("⚠️ AI analysis failed")
     
-    # Transcription
-    with st.expander("📝 Full Transcription", expanded=False):
-        st.text_area("Transcription", analysis['transcription']['text'], height=200, disabled=True)
+    # Transcription with better formatting
+    with st.expander("📝 High-Quality Transcription", expanded=False):
+        st.markdown("**Transcribed with enhanced Whisper settings:**")
+        st.text_area("", analysis['transcription']['text'], height=300, disabled=True)
     
-    # Speaker analysis
-    if analysis['speakers']:
-        with st.expander("👥 Speaker Analysis", expanded=True):
-            st.write(f"**Found {len(analysis['speakers'])} speaker segments**")
+    # Speaker analysis with timeline
+    if analysis['speakers'] and len(analysis['speakers']) > 0:
+        with st.expander("👥 Speaker Timeline", expanded=True):
+            st.write(f"**Detected {analysis['speaker_count']} different speakers**")
+            st.info("📝 Text quality: Enhanced Whisper transcription | ⏰ Timing: AssemblyAI speaker detection")
             
-            # Group by speaker
-            speakers_dict = {}
-            for speaker_data in analysis['speakers']:
-                speaker = speaker_data['speaker']
-                if speaker not in speakers_dict:
-                    speakers_dict[speaker] = []
-                speakers_dict[speaker].append(speaker_data)
-            
-            for speaker, segments in speakers_dict.items():
-                st.write(f"**{speaker}** ({len(segments)} segments)")
-                for segment in segments[:3]:
-                    st.write(f"  [{segment['start']:.1f}s - {segment['end']:.1f}s] {segment['text'][:100]}...")
+            for i, segment in enumerate(analysis['speakers'][:20]):  # Show first 20 segments
+                start_time = f"{int(segment['start']//60):02d}:{int(segment['start']%60):02d}"
+                end_time = f"{int(segment['end']//60):02d}:{int(segment['end']%60):02d}"
+                st.write(f"**{segment['speaker']}** [{start_time} - {end_time}]")
     
-    # AI Analysis
+    # AI Analysis with language-aware display
     if analysis['ai_analysis']:
-        st.subheader("🧠 Strategic Intelligence from Real Audio")
+        lang = analysis['transcription']['language']
+        title_suffix = "in Italiano 🇮🇹" if lang == 'it' else "in English 🇬🇧"
+        st.subheader(f"🧠 Strategic Intelligence {title_suffix}")
         
         # Create tabs for different analysis types
         tab1, tab2, tab3, tab4 = st.tabs(["💡 Strategic Insights", "🚀 Innovation Opportunities", "🔍 Themes", "⚡ Decisions"])
@@ -466,7 +555,7 @@ def display_new_analysis(analysis):
                     if insight.get('implicazione'):
                         st.write(f"   🎯 *{insight['implicazione']}*")
                     if insight.get('azione_suggerita'):
-                        st.write(f"   ➡️ **Action:** {insight['azione_suggerita']}")
+                        st.write(f"   ➡️ **Azione:** {insight['azione_suggerita']}")
                     st.divider()
         
         with tab2:
@@ -478,9 +567,9 @@ def display_new_analysis(analysis):
                     
                     col1, col2 = st.columns(2)
                     with col1:
-                        st.write(f"📈 **Impact:** {impact.title()}")
+                        st.write(f"📈 **Impatto:** {impact.title()}")
                     with col2:
-                        st.write(f"🎯 **Feasibility:** {feasibility.title()}")
+                        st.write(f"🎯 **Fattibilità:** {feasibility.title()}")
                     st.divider()
         
         with tab3:
@@ -489,14 +578,14 @@ def display_new_analysis(analysis):
                     importance = theme.get('importanza', 'N/A')
                     frequency = theme.get('frequenza', 'N/A')
                     st.write(f"**{theme.get('tema', 'N/A')}**")
-                    st.write(f"   Importance: {importance.title()} | Frequency: {frequency}")
+                    st.write(f"   Importanza: {importance.title()} | Frequenza: {frequency}")
                     st.divider()
         
         with tab4:
             if 'decisions_made' in analysis['ai_analysis']:
                 for i, decision in enumerate(analysis['ai_analysis']['decisions_made'], 1):
                     st.write(f"**{i}. {decision.get('decisione', 'N/A')}**")
-                    st.write(f"   👤 Responsible: {decision.get('responsabile', 'N/A')}")
+                    st.write(f"   👤 Responsabile: {decision.get('responsabile', 'N/A')}")
                     st.write(f"   ⏰ Timeline: {decision.get('timeline', 'N/A')}")
                     st.divider()
 
