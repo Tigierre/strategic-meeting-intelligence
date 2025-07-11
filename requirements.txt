@@ -6,4 +6,5 @@ python-dotenv==1.0.0
 requests==2.31.0
 assemblyai==0.17.0
 pydub==0.25.1
+httpx==0.24.1
 pathlib
