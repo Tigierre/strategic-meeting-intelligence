@@ -676,14 +676,14 @@ def display_analysis_results(analysis):
                     with col1:
                         impact = opp.get('impatto_potenziale', 'N/A')
                         impact_emoji = "🚀" if impact == 'alto' else "📈" if impact == 'medio' else "📊"
-                       st.write(f"{impact_emoji} **Impatto:** {impact.title()}")
-                   with col2:
-                       feasibility = opp.get('feasibilita', 'N/A')
-                       feas_emoji = "✅" if feasibility == 'alta' else "⚠️" if feasibility == 'media' else "🔴"
-                       st.write(f"{feas_emoji} **Fattibilità:** {feasibility.title()}")
-                   
-                   if opp.get('investimento_richiesto'):
-                       st.write(f"💰 **Investimento:** {opp['investimento_richiesto']}")
+                        st.write(f"{impact_emoji} **Impatto:** {impact.title()}")
+                    with col2:
+                        feasibility = opp.get('feasibilita', 'N/A')
+                        feas_emoji = "✅" if feasibility == 'alta' else "⚠️" if feasibility == 'media' else "🔴"
+                        st.write(f"{feas_emoji} **Fattibilità:** {feasibility.title()}")
+                    
+                    if opp.get('investimento_richiesto'):
+                        st.write(f"💰 **Investimento:** {opp['investimento_richiesto']}")
                    if opp.get('tempo_implementazione'):
                        st.write(f"⏱️ **Tempo:** {opp['tempo_implementazione']}")
                    st.divider()
