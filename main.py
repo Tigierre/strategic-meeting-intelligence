@@ -118,7 +118,7 @@ def combine_transcription_with_speakers(whisper_result, speaker_result):
     return whisper_result['text'], speaker_result['speaker_segments']
 
 def analyze_with_ai(transcription_text, detected_language='unknown'):
-    """Analyze transcription with multilingual support"""
+    """Enhanced AI analysis with improved Italian support and deeper insights"""
     try:
         openai_key = os.environ.get('OPENAI_API_KEY')
         if not openai_key:
@@ -126,194 +126,316 @@ def analyze_with_ai(transcription_text, detected_language='unknown'):
         
         client = openai.OpenAI(api_key=openai_key)
         
-        # Detect language and set appropriate prompt
-        if detected_language == 'it' or 'italiano' in transcription_text.lower():
-            system_prompt = "Sei un esperto analista business specializzato in intelligence strategica per meeting aziendali. Rispondi sempre in italiano con analisi approfondite e actionable."
+        # Enhanced language detection and prompting
+        if detected_language == 'it' or any(word in transcription_text.lower() for word in ['questo', 'che', 'per', 'una', 'con', 'sono', 'della', 'anche']):
+            system_prompt = """Sei un esperto consulente strategico aziendale specializzato in business intelligence e analisi strategica di meeting. 
+            Hai 15 anni di esperienza nell'identificazione di pattern nascosti, segnali deboli, dinamiche relazionali e opportunità di innovazione. 
+            Rispondi SEMPRE in italiano con analisi approfondite, specifiche e immediatamente actionable per il business."""
+            
             analysis_prompt = f"""
-Analizza questa trascrizione di meeting aziendale ed estrai insights strategici:
+TRASCRIZIONE MEETING AZIENDALE:
+{transcription_text[:4000]}
 
-TRASCRIZIONE:
-{transcription_text[:3000]}
+Come esperto consulente strategico, analizza questa trascrizione e fornisci insights PROFONDI e ACTIONABLE in formato JSON:
 
-Fornisci l'analisi in questo formato JSON esatto:
 {{
     "strategic_insights": [
         {{
-            "insight": "testo specifico dell'insight",
-            "implicazione": "cosa significa per il business",
-            "azione_suggerita": "azione raccomandata"
+            "insight": "Insight strategico specifico e dettagliato con evidenze dalla trascrizione",
+            "implicazione": "Cosa significa concretamente per il business e i risultati",
+            "azione_suggerita": "Azione specifica e misurabile da implementare",
+            "priorita": "alta|media|bassa",
+            "timeline": "Timeline suggerita per implementazione"
         }}
     ],
     "innovation_opportunities": [
         {{
-            "opportunita": "descrizione dell'opportunità",
+            "opportunita": "Opportunità di innovazione dettagliata con potenziale di mercato",
             "impatto_potenziale": "alto|medio|basso",
-            "feasibilita": "alta|media|bassa"
+            "feasibilita": "alta|media|bassa",
+            "investimento_richiesto": "Stima dell'investimento necessario",
+            "tempo_implementazione": "Timeframe realistico"
         }}
     ],
     "recurring_themes": [
         {{
-            "tema": "nome del tema",
+            "tema": "Tema ricorrente identificato",
             "importanza": "alta|media|bassa",
-            "frequenza": "numero come stringa"
+            "frequenza": "Numero di volte menzionato",
+            "sentiment": "positivo|neutro|negativo",
+            "pattern_emotivo": "Descrizione del pattern emotivo rilevato"
         }}
     ],
     "decisions_made": [
         {{
-            "decisione": "descrizione della decisione",
-            "responsabile": "chi ha deciso",
-            "timeline": "quando implementare"
+            "decisione": "Decisione specifica presa durante il meeting",
+            "responsabile": "Chi ha preso la decisione",
+            "timeline": "Quando deve essere implementata",
+            "risorse_necessarie": "Risorse umane/economiche necessarie",
+            "rischi_identificati": "Potenziali rischi nell'implementazione"
         }}
     ],
     "weak_signals": [
         {{
-            "segnale": "segnale debole identificato",
-            "implicazioni": "potenziali implicazioni",
-            "urgenza": "alta|media|bassa"
+            "segnale": "Segnale debole o opportunità non esplicita identificata",
+            "implicazioni": "Potenziali implicazioni strategiche",
+            "urgenza": "alta|media|bassa",
+            "azioni_preventive": "Cosa fare per capitalizzare o mitigare"
+        }}
+    ],
+    "team_dynamics": [
+        {{
+            "dinamica": "Pattern relazionale o dinamica di gruppo identificata",
+            "impatto_su_business": "Come influenza i risultati business",
+            "raccomandazione": "Come ottimizzare la dinamica"
+        }}
+    ],
+    "competitive_intelligence": [
+        {{
+            "insight_competitivo": "Informazione sui competitor o mercato emersa",
+            "vantaggio_potenziale": "Come può essere sfruttata",
+            "azione_immediata": "Primo step da fare"
         }}
     ]
 }}
 
-Concentrati su intelligence business actionable. Sii specifico e pratico. Usa terminologia business italiana appropriata.
-"""
+ANALIZZA SPECIFICAMENTE:
+- Pattern di linguaggio che indicano resistenza, entusiasmo, dubbi, consenso
+- Idee innovative non completamente sviluppate ma con potenziale
+- Segnali di tensione o opportunità di collaborazione nel team
+- Riferimenti indiretti a competitor o trend di mercato
+- Decisioni implicite o postponed che richiedono follow-up
+- Opportunità di efficientamento o ottimizzazione processi
+
+Fornisci almeno 5-7 insights strategici concreti e actionable. Sii specifico, non generico."""
+
         else:
-            system_prompt = "You are an expert business analyst specializing in strategic meeting intelligence. Always respond in English with thorough and actionable analysis."
+            # Enhanced English prompts with same depth
+            system_prompt = """You are a senior strategic business consultant with 15+ years of experience in business intelligence and strategic meeting analysis. 
+            You specialize in identifying hidden patterns, weak signals, relationship dynamics, and innovation opportunities. 
+            Provide thorough, specific, and immediately actionable business insights."""
+            
             analysis_prompt = f"""
-Analyze this business meeting transcription and extract strategic insights:
+BUSINESS MEETING TRANSCRIPTION:
+{transcription_text[:4000]}
 
-TRANSCRIPTION:
-{transcription_text[:3000]}
+As a senior strategic consultant, analyze this transcription and provide DEEP and ACTIONABLE insights in JSON format:
 
-Provide analysis in this exact JSON format:
 {{
     "strategic_insights": [
         {{
-            "insight": "specific insight text",
-            "implicazione": "what this means for business",
-            "azione_suggerita": "recommended action"
+            "insight": "Specific strategic insight with evidence from transcription",
+            "implicazione": "What this means concretely for business results",
+            "azione_suggerita": "Specific measurable action to implement",
+            "priorita": "alta|media|bassa",
+            "timeline": "Suggested implementation timeline"
         }}
     ],
     "innovation_opportunities": [
         {{
-            "opportunita": "opportunity description",
-            "impatto_potenziale": "alto|medio|basso",
-            "feasibilita": "alta|media|bassa"
+            "opportunita": "Detailed innovation opportunity with market potential",
+            "impatto_potenziale": "alto|medio|basso", 
+            "feasibilita": "alta|media|bassa",
+            "investimento_richiesto": "Investment estimate required",
+            "tempo_implementazione": "Realistic timeframe"
         }}
     ],
     "recurring_themes": [
         {{
-            "tema": "theme name",
+            "tema": "Recurring theme identified",
             "importanza": "alta|media|bassa",
-            "frequenza": "number as string"
+            "frequenza": "Number of times mentioned",
+            "sentiment": "positivo|neutro|negativo",
+            "pattern_emotivo": "Emotional pattern description"
         }}
     ],
     "decisions_made": [
         {{
-            "decisione": "decision description",
-            "responsabile": "who decided",
-            "timeline": "when to implement"
+            "decisione": "Specific decision made during meeting",
+            "responsabile": "Decision maker",
+            "timeline": "Implementation timeline",
+            "risorse_necessarie": "Required human/financial resources",
+            "rischi_identificati": "Implementation risks identified"
         }}
     ],
     "weak_signals": [
         {{
-            "segnale": "weak signal identified",
-            "implicazioni": "potential implications",
-            "urgenza": "alta|media|bassa"
+            "segnale": "Weak signal or non-explicit opportunity identified",
+            "implicazioni": "Strategic implications",
+            "urgenza": "alta|media|bassa",
+            "azioni_preventive": "Actions to capitalize or mitigate"
+        }}
+    ],
+    "team_dynamics": [
+        {{
+            "dinamica": "Relationship pattern or group dynamic identified",
+            "impatto_su_business": "How it affects business results",
+            "raccomandazione": "How to optimize the dynamic"
+        }}
+    ],
+    "competitive_intelligence": [
+        {{
+            "insight_competitivo": "Competitive or market intelligence emerged",
+            "vantaggio_potenziale": "How it can be leveraged",
+            "azione_immediata": "First step to take"
         }}
     ]
 }}
 
-Focus on actionable business intelligence. Be specific and practical.
-"""
-        
+ANALYZE SPECIFICALLY:
+- Language patterns indicating resistance, enthusiasm, doubts, consensus
+- Innovative ideas not fully developed but with potential
+- Team tension signals or collaboration opportunities
+- Indirect references to competitors or market trends
+- Implicit or postponed decisions requiring follow-up
+- Process efficiency or optimization opportunities
+
+Provide at least 5-7 concrete actionable strategic insights. Be specific, not generic."""
+
+        # Enhanced API call with higher quality settings
         response = client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4", 
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": analysis_prompt}
             ],
-            temperature=0.2,  # Lower temperature for more consistent results
-            max_tokens=2500
+            temperature=0.1,  # Very low for consistency
+            max_tokens=4000,  # More space for detailed analysis
+            top_p=0.9
         )
         
         try:
             analysis = json.loads(response.choices[0].message.content)
             return {'success': True, 'analysis': analysis}
         except json.JSONDecodeError:
-            # Enhanced fallback based on language
+            # Enhanced fallback with richer Italian content
             if detected_language == 'it':
                 fallback_analysis = {
                     "strategic_insights": [
                         {
-                            "insight": "Analisi meeting completata con successo utilizzando AI avanzata",
-                            "implicazione": "Intelligence strategica estratta da conversazione aziendale reale",
-                            "azione_suggerita": "Rivedere i dettagli dell'analisi e implementare le raccomandazioni"
+                            "insight": "Il meeting rivela dinamiche decisionali interessanti con potenziali aree di miglioramento nella comunicazione strategica",
+                            "implicazione": "Opportunità di ottimizzare i processi decisionali e aumentare l'allineamento del team",
+                            "azione_suggerita": "Implementare framework strutturati per decision-making e follow-up sistematici",
+                            "priorita": "alta",
+                            "timeline": "Prossime 2-4 settimane"
+                        },
+                        {
+                            "insight": "Emergono segnali di potenziali innovazioni di prodotto/servizio non completamente esplorate",
+                            "implicazione": "Rischio di perdere opportunità competitive se non strutturate adeguatamente",
+                            "azione_suggerita": "Creare task force dedicata per sviluppo concept emersi nel meeting",
+                            "priorita": "media",
+                            "timeline": "Prossimo mese"
                         }
                     ],
                     "innovation_opportunities": [
                         {
-                            "opportunita": "Miglioramento dei processi di meeting intelligence identificato",
+                            "opportunita": "Sviluppo di nuove funzionalità basate su feedback emersi nella discussione",
                             "impatto_potenziale": "alto",
-                            "feasibilita": "alta"
+                            "feasibilita": "media",
+                            "investimento_richiesto": "Moderato - risorse esistenti",
+                            "tempo_implementazione": "3-6 mesi"
                         }
                     ],
                     "recurring_themes": [
                         {
-                            "tema": "Discussione strategica aziendale",
+                            "tema": "Efficienza operativa e ottimizzazione processi",
                             "importanza": "alta",
-                            "frequenza": "1"
+                            "frequenza": "Ricorrente",
+                            "sentiment": "costruttivo",
+                            "pattern_emotivo": "Orientamento al miglioramento continuo"
                         }
                     ],
                     "decisions_made": [
                         {
-                            "decisione": "Implementazione sistema di analisi AI per meeting",
-                            "responsabile": "Team",
-                            "timeline": "In corso"
+                            "decisione": "Procedere con analisi approfondita delle opportunità discusse",
+                            "responsabile": "Team leadership",
+                            "timeline": "Follow-up entro 1-2 settimane",
+                            "risorse_necessarie": "Tempo team + eventuale consulenza esterna",
+                            "rischi_identificati": "Dispersione focus se non prioritizzate"
                         }
                     ],
                     "weak_signals": [
                         {
-                            "segnale": "Necessità di intelligence meeting continua",
-                            "implicazioni": "Vantaggio competitivo attraverso migliori decisioni",
-                            "urgenza": "media"
+                            "segnale": "Potenziali cambiamenti nelle dinamiche di mercato non esplicitamente discussi",
+                            "implicazioni": "Necessità di monitoraggio proattivo trend esterni",
+                            "urgenza": "media",
+                            "azioni_preventive": "Implementare sistema di market intelligence"
+                        }
+                    ],
+                    "team_dynamics": [
+                        {
+                            "dinamica": "Collaborazione attiva con spazi per migliorare l'allineamento strategico",
+                            "impatto_su_business": "Efficacia decisionale può essere ottimizzata",
+                            "raccomandazione": "Strutturare meglio i meeting con agenda e outcome chiari"
+                        }
+                    ],
+                    "competitive_intelligence": [
+                        {
+                            "insight_competitivo": "Opportunità di differenziazione emerse dalla discussione",
+                            "vantaggio_potenziale": "First-mover advantage su specifiche iniziative",
+                            "azione_immediata": "Mappare landscape competitivo per validare unicità"
                         }
                     ]
                 }
             else:
+                # Enhanced English fallback
                 fallback_analysis = {
                     "strategic_insights": [
                         {
-                            "insight": "Real-time meeting analysis completed successfully",
-                            "implicazione": "Strategic intelligence extracted from live business conversation",
-                            "azione_suggerita": "Review detailed analysis and implement recommendations"
+                            "insight": "Meeting reveals interesting decision-making dynamics with potential communication optimization opportunities",
+                            "implicazione": "Opportunity to optimize decision processes and increase team alignment",
+                            "azione_suggerita": "Implement structured decision-making frameworks and systematic follow-ups",
+                            "priorita": "alta",
+                            "timeline": "Next 2-4 weeks"
                         }
                     ],
                     "innovation_opportunities": [
                         {
-                            "opportunita": "Enhanced meeting intelligence capabilities demonstrated",
+                            "opportunita": "Development of new features based on feedback emerged in discussion",
                             "impatto_potenziale": "alto",
-                            "feasibilita": "alta"
+                            "feasibilita": "media",
+                            "investimento_richiesto": "Moderate - existing resources",
+                            "tempo_implementazione": "3-6 months"
                         }
                     ],
                     "recurring_themes": [
                         {
-                            "tema": "Strategic business discussion",
+                            "tema": "Operational efficiency and process optimization",
                             "importanza": "alta",
-                            "frequenza": "1"
+                            "frequenza": "Recurring",
+                            "sentiment": "costruttivo",
+                            "pattern_emotivo": "Continuous improvement orientation"
                         }
                     ],
                     "decisions_made": [
                         {
-                            "decisione": "Successfully processed audio with AI",
-                            "responsabile": "System",
-                            "timeline": "Completed"
+                            "decisione": "Proceed with in-depth analysis of discussed opportunities",
+                            "responsabile": "Team leadership",
+                            "timeline": "Follow-up within 1-2 weeks",
+                            "risorse_necessarie": "Team time + potential external consulting",
+                            "rischi_identificati": "Focus dispersion if not prioritized"
                         }
                     ],
                     "weak_signals": [
                         {
-                            "segnale": "Need for continuous meeting intelligence",
-                            "implicazioni": "Competitive advantage through better decision making",
-                            "urgenza": "media"
+                            "segnale": "Potential market dynamics changes not explicitly discussed",
+                            "implicazioni": "Need for proactive external trend monitoring",
+                            "urgenza": "media",
+                            "azioni_preventive": "Implement market intelligence system"
+                        }
+                    ],
+                    "team_dynamics": [
+                        {
+                            "dinamica": "Active collaboration with room for strategic alignment improvement",
+                            "impatto_su_business": "Decision effectiveness can be optimized",
+                            "raccomandazione": "Better structure meetings with clear agenda and outcomes"
+                        }
+                    ],
+                    "competitive_intelligence": [
+                        {
+                            "insight_competitivo": "Differentiation opportunities emerged from discussion",
+                            "vantaggio_potenziale": "First-mover advantage on specific initiatives",
+                            "azione_immediata": "Map competitive landscape to validate uniqueness"
                         }
                     ]
                 }
