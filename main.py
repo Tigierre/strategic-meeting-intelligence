@@ -684,7 +684,7 @@ def display_analysis_results(analysis):
                     
                     if opp.get('investimento_richiesto'):
                         st.write(f"💰 **Investimento:** {opp['investimento_richiesto']}")
-                   if opp.get('tempo_implementazione'):
+                    if opp.get('tempo_implementazione'):
                        st.write(f"⏱️ **Tempo:** {opp['tempo_implementazione']}")
                    st.divider()
        
